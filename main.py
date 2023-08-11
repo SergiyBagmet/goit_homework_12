@@ -1,7 +1,11 @@
-from package import AddressBook, Record, wraps
+from package import AddressBook, AddressBookEncoder, Record, wraps, json
 
 
-
+file_json = "test.json"
+with open(file_json, "r") as file:
+    unpacked = json.load(file)
+a_book = AddressBook()    
+a_book.from_dict(unpacked)
 
 
 def input_error(func):
@@ -14,22 +18,32 @@ def input_error(func):
         """
         try:
             return func(*args)
-        except IndexError:
-            return "Give me name and phone please"
-        except ValueError:
-            return "Give me an information"
-        except KeyError:
-            return "Give me the name from phonebook"
+        except IndexError as err:
+            return f"Give me name and phone please {str(err)}"
+        except ValueError as err:
+            return f"Give me an information {str(err)}"
+        except KeyError as err:
+            return f"Give me the name from phonebook {str(err)}"
     return wrapper  
 
+@input_error
+def add_handler(data: list) -> str:
+    rec = Record(data[0], data[1])
+    a_book.add_record(rec)
+    return f"contact {str(rec)[9:]} has be added"
 
+def change_handler(data: list) -> str:
+    pass
 
-
+def show_all(*args) -> str:
+    return "\n".join([str(record)[9:] for record in a_book.values()])
 
 def hello_handler(*args):
     return "How can I help you?"
 
 def exit_handler(*args):
+    with open(file_json, "w") as fh:
+        json.dump(a_book, fh, cls=AddressBookEncoder, sort_keys=True, indent=2)
     return "Good bye!"
 
 def unknown_command(*args):
@@ -45,15 +59,14 @@ def command_parser(row_str: str):
     return unknown_command, None
 
 BOT_COMMANDS = {
-    # add_handler: ["add", "+"],
+    add_handler: ["add", "+"],
     exit_handler: ["good bye", "close", "exit"],
     hello_handler: ["hello"],
-    # change_handler: ["change"],
-    # show_all: ["show all"]
+    change_handler: ["change"],
+    show_all: ["show all"]
 }
 
 def main():
-    a_book = AddressBook()
     while True:
         user_input = input(">>>")
         if not user_input or user_input.isspace():

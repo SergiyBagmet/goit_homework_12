@@ -251,13 +251,13 @@ class AddressBook(UserDict):
             raise TypeError("Record must be an instance of the Record class.")
         self.data[record.name.value] = record 
     
-    def to_dict(self):
+    def to_dict(self) -> dict:
         res_dict = {}
         for key, rec in self.data.items():
             res_dict[key] = rec.to_dict()
         return res_dict
 
-    def from_dict(self, data_json: dict):
+    def from_dict(self, data_json: dict) -> None:
         if type(data_json) != dict:
             raise TypeError("this is not dict")
         
@@ -324,7 +324,7 @@ if __name__ == '__main__':
     print(ab)
     file_json = "test.json"
     with open(file_json, "w") as fh:
-        json.dump(ab, fh, cls=AddressBookEncoder)
+        json.dump(ab, fh, cls=AddressBookEncoder, sort_keys=True, indent=2)
 
     with open(file_json, "r") as fh:
         unpacked = json.load(fh)
