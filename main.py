@@ -1,8 +1,8 @@
 from package import AddressBook, Record, wraps
 
 
-ab = AddressBook()
-#TODO if json None
+
+
 
 def input_error(func):
     @wraps(func) #для отображения доки/имени
@@ -53,6 +53,7 @@ BOT_COMMANDS = {
 }
 
 def main():
+    a_book = AddressBook()
     while True:
         user_input = input(">>>")
         if not user_input or user_input.isspace():

@@ -1,4 +1,5 @@
 from collections import UserDict
+import json
 from datetime import date 
 from dateparser import parse as dt_parser
 
@@ -25,7 +26,7 @@ class Field:
 
     def __str__(self) -> str:
         return f'{self.value}'
-        
+    
 
 class Name(Field):
     """
@@ -91,7 +92,7 @@ class Birthday(Field):
             str: The valid ISO-formatted date string.    
         """
         try:
-           return date.isoformat(dt_parser(str(value), settings={'STRICT_PARSING': True}).date())
+            return date.isoformat(dt_parser(str(value), settings={'STRICT_PARSING': True}).date())
         except Exception: 
             raise FormatDateError('not correct date!!!')
             
@@ -137,7 +138,7 @@ class Record:
 
     @staticmethod
     def try_valid_type_phone(phone: str) -> Phone:
-        if type(phone) != Phone:
+        if type(phone) != Phone and phone != None:
             try:
                 return Phone(phone)
             except Exception:
@@ -159,6 +160,12 @@ class Record:
         phones_str = " ".join([ph.value for ph in self.phones]) 
         return f'<Record> name: {self.name} -->> phone(s): {phones_str} {birthday_str}'
 
+    def to_dict(self):
+        return {
+            "phones": [phone.value for phone in self.phones],
+            "birthday": self.birthday.value if self.birthday else None
+        }
+    
     def add_phone(self, phone: Phone) -> None:
         """
         Add a new phone number to the list of phone numbers for the contact.
@@ -204,6 +211,9 @@ class Record:
             self.phones[index] = new_phone
         else:
             raise ValueError(f"The phone '{old_phone.value}' is not in this record '{self.name}'.")
+        
+    def add_birthday(self, birthday):
+        self.birthday = self.try_valid_type_birthday(birthday)
 
     def days_to_birthday(self) -> int :
         """
@@ -226,7 +236,6 @@ class AddressBook(UserDict):
     """
     A class representing an address book, which is a dictionary 
     with record names as keys and record objects as values.
-    TODO Singelton?
     """
     
     def add_record(self, record: Record) -> None:
@@ -242,6 +251,23 @@ class AddressBook(UserDict):
             raise TypeError("Record must be an instance of the Record class.")
         self.data[record.name.value] = record 
     
+    def to_dict(self):
+        res_dict = {}
+        for key, rec in self.data.items():
+            res_dict[key] = rec.to_dict()
+        return res_dict
+
+    def from_dict(self, data_json: dict):
+        if type(data_json) != dict:
+            raise TypeError("this is not dict")
+        
+        for name, record in data_json.items():
+            res_record = Record(name, birthday=record['birthday'])
+            for i in range(len(record["phones"])):
+                res_record.add_phone(record["phones"][i])
+            self.add_record(res_record)
+                
+
     def iterator(self, item_number: int) -> str:
         """
         Iterate through the records in the address book and yield groups of records.
@@ -272,74 +298,48 @@ class AddressBook(UserDict):
                 result = ""
             elif counter == len(self.data) - len(self.data) % item_number + 1: # условие для хвоста
                 yield result
-    
+
+class AddressBookEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, AddressBook):
+            return obj.to_dict()  # Перетворити AddressBook на словник
+        return super().default(obj)
+
+# class AddressBookDecoder(json.JSONDecoder):
+#     def decode(self, s, **kwargs):
+#         data = super().decode(s, **kwargs)
+#         return AddressBook.from_dict(data)         
     
 if __name__ == '__main__':
 
-    test = Birthday("26*02*1994")
-    print(test)
     name_1 = Name('Bill')
     phone_1 = Phone('1234567890')
     b_day_1 = Birthday('1994-02-26')
-
-    name_2 = Name('serg')
-    phone_2 = Phone('1234567890')
-    b_day_2 = Birthday('1994-02-26')
-    
-    name_3 = Name('Oleg')
-    phone_3 = Phone('1234567890')
-    b_day_3 = Birthday('1994-02-26')
-
-    name_4 = Name('яяЯнаа')
-    phone_4 = Phone('1234567890')
-    b_day_4 = Birthday('1994-02-26')
-
-    rec_1 = Record("Лена", "1234554545", test)
-    print(rec_1.days_to_birthday())
-
-
-    rec_2 = Record("Охрана", phone_2, b_day_2)
-    rec_3 = Record("а я не Лена", phone_3, b_day_3)
-    rec_4 = Record(name_4, phone_4, b_day_4)
+    rec = Record(name_1, phone_1, b_day_1)
     ab = AddressBook()
-    ab.add_record(rec_1)
-    ab.add_record(rec_2)
-    ab.add_record(rec_3)
-    ab.add_record(rec_4)
-    # for i in ab.iterator(2):
-    #     print(i)
-    
-    # name = Name('Bill')
-    # phone = Phone('1234567890')
-    # b_day = Birthday('1994-02-26')
-    # rec = Record(name, phone, b_day)
-    # print(rec.phones[0].value)
-    # print(rec.birthday.value)
-    # print(rec.days_to_birthday())
-    # name = Name('Bill')
-    # phone = Phone('1234567890')
-    # b_day = Birthday('1994-02-26')
-    # rec = Record(name, phone, "1994-02-26")
-    # ab = AddressBook()
-    # ab.add_record(rec)
-    # assert isinstance(ab['Bill'], Record)
-    # assert isinstance(ab['Bill'].name, Name)
-    # assert isinstance(ab['Bill'].phones, list)
-    # assert isinstance(ab['Bill'].phones[0], Phone)
-    # assert isinstance(ab['Bill'].birthday, Birthday)
-    # assert ab['Bill'].phones[0].value == '1234567890'
-    # print('All Ok)')  
-    # # a = Field("name")
-    # num = Phone('12345678974')
-    # print(a.value)
-    # print(num.value)
-    # num.value = "987654321123"
-    # print(num.value)
-    # day = Birthday('1994-02-26')
-    # day.value = '1994-26-02'
-    # print(day.value)
+    ab.add_record(rec)
 
-    
+
+
+    print(ab)
+    file_json = "test.json"
+    with open(file_json, "w") as fh:
+        json.dump(ab, fh, cls=AddressBookEncoder)
+
+    with open(file_json, "r") as fh:
+        unpacked = json.load(fh)
+
+    ab_jsone = AddressBook()
+    ab_jsone.from_dict(unpacked)
+    print(ab_jsone)
+
+    assert isinstance(ab_jsone['Bill'], Record)
+    assert isinstance(ab_jsone['Bill'].name, Name)
+    assert isinstance(ab_jsone['Bill'].phones, list)
+    assert isinstance(ab_jsone['Bill'].phones[0], Phone)
+    assert ab_jsone['Bill'].phones[0].value == '1234567890'
+    print('All Ok)')  
+   
 
 
 
