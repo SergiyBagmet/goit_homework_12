@@ -1,4 +1,4 @@
-from package import AddressBook, AddressBookEncoder, Record, wraps, json
+from package import AddressBook, AddressBookEncoder, Record, wraps, json, Phone
 
 
 file_json = "test.json"
@@ -28,12 +28,19 @@ def input_error(func):
 
 @input_error
 def add_handler(data: list) -> str:
-    rec = Record(data[0], data[1])
+    """"""
+    name, phone = data[:2] 
+    rec = Record(name, phone, data[2]) if len(data)>= 3 else Record(name, phone) 
     a_book.add_record(rec)
     return f"contact {str(rec)[9:]} has be added"
 
-def change_handler(data: list) -> str:
-    pass
+@input_error
+def change_handler_phone(data: list) -> str:
+    """"""
+    name, old_phone, new_phone = data[:3]
+    rec = a_book.get_record(name)
+    rec.change_phone(old_phone, new_phone)
+    return f"contact {name} has be changed phone to {Phone(new_phone)}"
 
 def show_all(*args) -> str:
     return "\n".join([str(record)[9:] for record in a_book.values()])
@@ -50,7 +57,7 @@ def unknown_command(*args):
     return 'Unknown command'
 
 def command_parser(row_str: str):
-    elements = row_str.split(" ")
+    elements = row_str.strip().split(" ")
     for key, value in BOT_COMMANDS.items():
         if elements[0].lower() in value:
             return key, elements[1:]
@@ -62,7 +69,7 @@ BOT_COMMANDS = {
     add_handler: ["add", "+"],
     exit_handler: ["good bye", "close", "exit"],
     hello_handler: ["hello"],
-    change_handler: ["change"],
+    change_handler_phone: ["change phone"],
     show_all: ["show all"]
 }
 

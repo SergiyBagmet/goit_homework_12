@@ -27,6 +27,12 @@ class Field:
     def __str__(self) -> str:
         return f'{self.value}'
     
+    def __eq__(self, val):
+        # == 
+        if isinstance(val, self.__class__):
+            val = val.value
+        return self.value == val
+    
 
 class Name(Field):
     """
@@ -55,16 +61,17 @@ class Phone(Field):
         self.value = value # при инициализации отрабативает сеттер
         
     @staticmethod
-    def __valid_phone(value) -> None:
+    def __valid_phone(value) -> str: 
         phone = ''.join(filter(str.isdigit, value))
         if 9 >= len(phone) <= 15 : #псевдо проверка номера
-            raise ValueError("Phone number isn't correct")    
+            raise ValueError("Phone number isn't correct")
+        return phone
 
     @Field.value.setter # переопределяем сеттер родительского класса
     def value(self, value: str) -> None:
         super(Phone, Phone).value.__set__(self, value) # родительский сеттер проверка на стр
-        self.__valid_phone(value)
-        self._value = value
+        self._value  = self.__valid_phone(value)
+        
       
 class FormatDateError(Exception):
     """
@@ -160,6 +167,7 @@ class Record:
         phones_str = " ".join([ph.value for ph in self.phones]) 
         return f'<Record> name: {self.name} -->> phone(s): {phones_str} {birthday_str}'
 
+
     def to_dict(self):
         return {
             "phones": [phone.value for phone in self.phones],
@@ -251,6 +259,12 @@ class AddressBook(UserDict):
             raise TypeError("Record must be an instance of the Record class.")
         self.data[record.name.value] = record 
     
+    def get_record(self, name:str) -> Record:
+        record = self.data.get(name)
+        if not record:
+            raise ValueError(f"This name {name} isn't in Address Book")
+        return record
+    
     def to_dict(self) -> dict:
         res_dict = {}
         for key, rec in self.data.items():
@@ -314,31 +328,42 @@ if __name__ == '__main__':
 
     name_1 = Name('Bill')
     phone_1 = Phone('1234567890')
+    phone_2 = Phone('1234567890')
     b_day_1 = Birthday('1994-02-26')
     rec = Record(name_1, phone_1, b_day_1)
-    ab = AddressBook()
-    ab.add_record(rec)
+    
+    print(phone_1.value == phone_2.value) # True
+    print(phone_1 ==  phone_2) # False
+    
+    print(rec)
+    rec.change_phone("1234567890", "0987654321")
+    print(rec)
+ 
+
+
+    # ab = AddressBook()
+    # ab.add_record(rec)
 
 
 
-    print(ab)
-    file_json = "test.json"
-    with open(file_json, "w") as fh:
-        json.dump(ab, fh, cls=AddressBookEncoder, sort_keys=True, indent=2)
+    # print(ab)
+    # file_json = "test.json"
+    # with open(file_json, "w") as fh:
+    #     json.dump(ab, fh, cls=AddressBookEncoder, sort_keys=True, indent=2)
 
-    with open(file_json, "r") as fh:
-        unpacked = json.load(fh)
+    # with open(file_json, "r") as fh:
+    #     unpacked = json.load(fh)
 
-    ab_jsone = AddressBook()
-    ab_jsone.from_dict(unpacked)
-    print(ab_jsone)
+    # ab_jsone = AddressBook()
+    # ab_jsone.from_dict(unpacked)
+    # print(ab_jsone)
 
-    assert isinstance(ab_jsone['Bill'], Record)
-    assert isinstance(ab_jsone['Bill'].name, Name)
-    assert isinstance(ab_jsone['Bill'].phones, list)
-    assert isinstance(ab_jsone['Bill'].phones[0], Phone)
-    assert ab_jsone['Bill'].phones[0].value == '1234567890'
-    print('All Ok)')  
+    # assert isinstance(ab_jsone['Bill'], Record)
+    # assert isinstance(ab_jsone['Bill'].name, Name)
+    # assert isinstance(ab_jsone['Bill'].phones, list)
+    # assert isinstance(ab_jsone['Bill'].phones[0], Phone)
+    # assert ab_jsone['Bill'].phones[0].value == '1234567890'
+    # print('All Ok)')  
    
 
 

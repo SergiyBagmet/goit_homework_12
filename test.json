@@ -1,8 +1,20 @@
 {
+  "Andrey": {
+    "birthday": null,
+    "phones": [
+      "1234567890"
+    ]
+  },
   "Bill": {
     "birthday": null,
     "phones": [
       "1234567890"
+    ]
+  },
+  "Nata": {
+    "birthday": "1975-03-05",
+    "phones": [
+      "380666529589"
     ]
   },
   "Olga": {
