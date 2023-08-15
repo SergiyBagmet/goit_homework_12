@@ -6,7 +6,7 @@
     ]
   },
   "Bill": {
-    "birthday": null,
+    "birthday": "1994-02-26",
     "phones": [
       "1234567890"
     ]
@@ -23,16 +23,10 @@
       "1234567894"
     ]
   },
-  "serg": {
-    "birthday": null,
-    "phones": [
-      "78945613254"
-    ]
-  },
   "sergey": {
-    "birthday": null,
+    "birthday": "1994-02-26",
     "phones": [
-      "1234567893"
+      "380666529589"
     ]
   }
 }

@@ -42,7 +42,7 @@ class Name(Field):
         self.value = value
 
     # наследуем геттер и сеттер ради тренировки 
-    # в данном случае можно било обойтись супер в инит
+    # в данном случае можно било обойтись супер 
     @property
     def value(self) -> str:
         return super(Name,Name).value.fget(self)
@@ -124,18 +124,20 @@ class Record:
         birthday (Birthday): The birthday of the contact.
     """
   
-    def __init__(self, name: Name, phone: Phone=None, birthday: Birthday=None ) -> None:
-        
+    def __init__(self, name: Name|str, phone: Phone|str=None, birthday: Birthday|str=None ) -> None:
+        #TODO може це слід робити в __new__ ? 
+        # або можливо валідацію(з поверненням валідного значення) 
+        # треба було зробити класметодами у відповідних классах і тут викликати замість цих траів?
         name = self.try_valid_type_name(name)
         phone = self.try_valid_type_phone(phone)
         birthday = self.try_valid_type_birthday(birthday)
 
         self.name = name
-        self.phones = [phone] if phone else []
+        self.phones = [phone] if phone is not None else []
         self.birthday = birthday if birthday is not None else None
 
     @staticmethod
-    def try_valid_type_name(name: str) -> Name: 
+    def try_valid_type_name(name: str|Name) -> Name: 
         if type(name) != Name:
             try:
                 return Name(name) # тут перезаписуємо змінну name в обькт классу
@@ -144,7 +146,7 @@ class Record:
         return name    
 
     @staticmethod
-    def try_valid_type_phone(phone: str) -> Phone:
+    def try_valid_type_phone(phone: str|Phone) -> Phone:
         if type(phone) != Phone and phone != None:
             try:
                 return Phone(phone)
@@ -153,28 +155,15 @@ class Record:
         return phone    
 
     @staticmethod
-    def try_valid_type_birthday(birthday: str) -> str:    
+    def try_valid_type_birthday(birthday: str|Birthday) -> str:    
         if type(birthday) != Birthday and birthday != None:
             try:
                 return Birthday(str(birthday))
             except Exception: 
                 raise ValueError(f"birthday:{birthday} must be type(Birthday) or a valid string representation of a Birthday object")
         return birthday    
-       
-        
-    def __str__(self) -> str:# для принта рекорда..не знаю как принято..сделал как чувствую
-        birthday_str = "birthday: "+str(self.birthday) if self.birthday != None else ""
-        phones_str = " ".join([ph.value for ph in self.phones]) 
-        return f'<Record> name: {self.name} -->> phone(s): {phones_str} {birthday_str}'
-
-
-    def to_dict(self):
-        return {
-            "phones": [phone.value for phone in self.phones],
-            "birthday": self.birthday.value if self.birthday else None
-        }
     
-    def add_phone(self, phone: Phone) -> None:
+    def add_phone(self, phone: Phone|str) -> None:
         """
         Add a new phone number to the list of phone numbers for the contact.
         Args:
@@ -183,9 +172,11 @@ class Record:
             None: This method does not return any value.
         """
         phone = self.try_valid_type_phone(phone)
+        if phone in self.phones:
+            raise ValueError("this phone number has already been added")
         self.phones.append(phone)
 
-    def remove_phone(self, phone: Phone) -> None:
+    def remove_phone(self, phone: Phone|str) -> None:
         """
         Remove a phone number from the list of phone numbers for the contact.
 
@@ -198,10 +189,10 @@ class Record:
         """
         phone = self.try_valid_type_phone(phone)
         if phone not in self.phones:
-            raise KeyError(f"The phone '{phone}' is not in the record.")
+            raise ValueError(f"The phone '{phone}' is not in this record.")
         self.phones.remove(phone)
         
-    def change_phone(self, old_phone: Phone, new_phone : Phone) -> None:
+    def change_phone(self, old_phone: Phone|str, new_phone: Phone|str) -> None:
         """
         Change a phone number in the list of phone numbers for the contact.
 
@@ -212,16 +203,15 @@ class Record:
         Raises:
             ValueError: If the old phone number is not found in the contact's list of phone numbers.
         """
-        old_phone = self.try_valid_type_phone(old_phone)
+        old_phone = self.try_valid_type_phone(old_phone) # obj_phone or raise
         new_phone = self.try_valid_type_phone(new_phone)
-        if old_phone in self.phones: # если номер входит получаем индекс 
-            index = self.phones.index(old_phone)
-            self.phones[index] = new_phone
-        else:
-            raise ValueError(f"The phone '{old_phone.value}' is not in this record '{self.name}'.")
+        if old_phone not in self.phones: 
+            raise ValueError(f"The phone '{old_phone}' is not in this record '{self.name}'.")
+        index = self.phones.index(old_phone)
+        self.phones[index] = new_phone
         
-    def add_birthday(self, birthday):
-        self.birthday = self.try_valid_type_birthday(birthday)
+    def change_birthday(self, birthday):
+        self.birthday = self.try_valid_type_birthday(birthday)   
 
     def days_to_birthday(self) -> int :
         """
@@ -233,12 +223,24 @@ class Record:
             RecordNotBirthdayError: If the contact does not have a birthday set.
         """
         if self.birthday == None:
-            raise RecordNotBirthdayError("No birthday set for the contact.")
+            raise ValueError("No birthday set for the contact.")
         today = date.today()
         bday = date.fromisoformat(self.birthday.value).replace(year=today.year) # дата др в этом году 
         if today > bday : # если др уже прошло берем дату следующего(в следующем году)
            bday= bday.replace(year=today.year+1)
         return (bday - today).days
+    
+    def __str__(self) -> str:# для принта рекорда..не знаю как принято..сделал как чувствую
+        birthday_str = "birthday: "+str(self.birthday) if self.birthday != None else ""
+        phones_str = " ".join([ph.value for ph in self.phones]) 
+        return f'<Record> name: {self.name} -->> phone(s): {phones_str} {birthday_str}'
+
+
+    def to_dict(self):
+        return {
+            "phones": [phone.value for phone in self.phones],
+            "birthday": self.birthday.value if self.birthday else None
+        }
           
 class AddressBook(UserDict):
     """
@@ -260,11 +262,18 @@ class AddressBook(UserDict):
         self.data[record.name.value] = record 
     
     def get_record(self, name:str) -> Record:
+        #TODO може тут через  __getitem__
         record = self.data.get(name)
         if not record:
-            raise ValueError(f"This name {name} isn't in Address Book")
+            raise KeyError(f"This name {name} isn't in Address Book")
         return record
     
+    def del_record(self, name: str) -> None:
+        #TODO може тут через  __delitem__
+        del_record = self.data.pop(name, None)
+        if del_record is None:
+            raise KeyError(f"Can't delete contact {name} isn't in Address Book")
+        
     def to_dict(self) -> dict:
         res_dict = {}
         for key, rec in self.data.items():
@@ -331,13 +340,18 @@ if __name__ == '__main__':
     phone_2 = Phone('1234567890')
     b_day_1 = Birthday('1994-02-26')
     rec = Record(name_1, phone_1, b_day_1)
+
     
-    print(phone_1.value == phone_2.value) # True
-    print(phone_1 ==  phone_2) # False
+    # print(phone_1.value == phone_2.value) # True
+    # print(phone_1 ==  phone_2) # False
     
     print(rec)
-    rec.change_phone("1234567890", "0987654321")
+    rec.remove_phone("1234567890")
     print(rec)
+    rec.remove_phone("1234567890")
+    print(rec)
+    # rec.change_phone("1234567890", "0987654321")
+    # print(rec)
  
 
 
