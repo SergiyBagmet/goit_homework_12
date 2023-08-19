@@ -21,7 +21,7 @@ def input_error(func):
         except IndexError as err:
             return f"Give me name and phone please {str(err)}"
         except ValueError as err:
-            return f"Give me an information {str(err)}"
+            return f"Give me an information: {str(err)}"
         except KeyError as err:
             return f"Give me the name from phonebook {str(err)}"
     return wrapper  
@@ -91,6 +91,15 @@ def handler_days_to_birthday(data: list[str]) -> str:
     days = record.days_to_birthday() 
     return f"{days} days left until {name}'s birthday"  
 
+@input_error
+def search_handler(data: list[str]) -> str:
+    """"""
+    search_word, = data
+    res = "\n".join(a_book.search(search_word))
+    if not res:  #TODO not work???
+        return "not found any contact"
+    return res
+
 def show_all(*args) -> str:
     # тут может бить красивая формат обертка через цикл и поля рекорда
     return "\n".join([str(record)[9:] for record in a_book.values()])
@@ -128,6 +137,7 @@ BOT_COMMANDS = {
     handler_days_to_birthday: ["days"],
     del_handler_phone: ["del phone"],
     delete_handler: ["delete"],
+    search_handler: ["search"],
     show_all: ["show all"],
     exit_handler: ["good bye", "close", "exit"],
 }

@@ -8,6 +8,7 @@ class Field:
     Class parent representing a field used in the record of the address book.
     """
     def __init__(self, value: str) -> None:
+        self._value = None
         self.value = value # при инициализации отрабативает сеттер
       
     @staticmethod
@@ -29,7 +30,7 @@ class Field:
     
     def __eq__(self, val):
         # == 
-        if isinstance(val, self.__class__):
+        if isinstance(val, self.__class__): # если зайдет дочерний селф же станит дочерним?
             val = val.value
         return self.value == val
     
@@ -39,10 +40,11 @@ class Name(Field):
     Class representing the name field in a record of  the address book.
     """
     def __init__(self, value: str) -> None:
+        self._value = None
         self.value = value
 
     # наследуем геттер и сеттер ради тренировки 
-    # в данном случае можно било обойтись супер 
+    # в данном случае можно било обойтись без супер 
     @property
     def value(self) -> str:
         return super(Name,Name).value.fget(self)
@@ -52,12 +54,12 @@ class Name(Field):
         super(Name,Name).value.fset(self, value)  
        
 
-
 class Phone(Field):
     """
     Class representing the phone field in a record of the address book.
     """
     def __init__(self, value: str) -> None:
+        self._value = None
         self.value = value # при инициализации отрабативает сеттер
         
     @staticmethod
@@ -72,12 +74,6 @@ class Phone(Field):
         super(Phone, Phone).value.__set__(self, value) # родительский сеттер проверка на стр
         self._value  = self.__valid_phone(value)
         
-      
-class FormatDateError(Exception):
-    """
-    Exception, If the input date string is not in a valid date format.
-    """
-    pass
 
 class Birthday(Field):
     """
@@ -85,6 +81,7 @@ class Birthday(Field):
     The date is stored in ISO 8601 format.
     """
     def __init__(self, value: str) -> None:
+        self._value = None
         self.value = value # при инициализации отрабативает сеттер
     
     @staticmethod
@@ -101,18 +98,12 @@ class Birthday(Field):
         try:
             return date.isoformat(dt_parser(str(value), settings={'STRICT_PARSING': True}).date())
         except Exception: 
-            raise FormatDateError('not correct date!!!')
+            raise ValueError('not correct date!!!')
             
     @Field.value.setter
     def value(self, value: str) -> None:
         self._value = self.__valid_date(value)
         
-      
-class RecordNotBirthdayError(Exception): 
-    """
-    Custom exception class to indicate that the record does not have a birthday.
-    """
-    pass
 
 class Record:
     """
@@ -126,8 +117,7 @@ class Record:
   
     def __init__(self, name: Name|str, phone: Phone|str=None, birthday: Birthday|str=None ) -> None:
         #TODO може це слід робити в __new__ ? 
-        # або можливо валідацію(з поверненням валідного значення) 
-        # треба було зробити класметодами у відповідних классах і тут викликати замість цих траів?
+        # може треба було зробити класметодами у відповідних классах і тут викликати замість цих траів?
         name = self.try_valid_type_name(name)
         phone = self.try_valid_type_phone(phone)
         birthday = self.try_valid_type_birthday(birthday)
@@ -197,9 +187,8 @@ class Record:
         Change a phone number in the list of phone numbers for the contact.
 
         Args:
-            old_phone (Phone): The existing phone number to be replaced.
-            new_phone (Phone): The new phone number to replace the existing one.
-            or try valid Str : --//-- .
+            old_phone (Phone)  or try valid Str: The existing phone number to be replaced.
+            new_phone (Phone)  or try valid Str: The new phone number to replace the existing one.
         Raises:
             ValueError: If the old phone number is not found in the contact's list of phone numbers.
         """
@@ -220,10 +209,10 @@ class Record:
         Returns:
             int: The number of days remaining until the contact's next birthday.
         Raises:
-            RecordNotBirthdayError: If the contact does not have a birthday set.
+            KeyError: If the contact does not have a birthday set.
         """
         if self.birthday == None:
-            raise ValueError("No birthday set for the contact.")
+            raise KeyError("No birthday set for the contact.")
         today = date.today()
         bday = date.fromisoformat(self.birthday.value).replace(year=today.year) # дата др в этом году 
         if today > bday : # если др уже прошло берем дату следующего(в следующем году)
@@ -235,6 +224,10 @@ class Record:
         phones_str = " ".join([ph.value for ph in self.phones]) 
         return f'<Record> name: {self.name} -->> phone(s): {phones_str} {birthday_str}'
 
+    def __repr__(self) -> str:
+        birthday_str = str(self.birthday) if self.birthday != None else ""
+        phones_str = " ".join([ph.value for ph in self.phones]) if self.phones != [] else ""
+        return f'{self.name} {phones_str} {birthday_str}'
 
     def to_dict(self):
         return {
@@ -289,7 +282,12 @@ class AddressBook(UserDict):
             for i in range(len(record["phones"])):
                 res_record.add_phone(record["phones"][i])
             self.add_record(res_record)
-                
+
+    def search(self, search_word: str) -> str:
+        for record in self.data.values():
+            if search_word.lower() in record.__repr__().lower():
+                yield str(record)[9:]
+              
 
     def iterator(self, item_number: int) -> str:
         """

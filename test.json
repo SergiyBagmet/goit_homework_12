@@ -18,9 +18,15 @@
     ]
   },
   "Olga": {
-    "birthday": null,
+    "birthday": "2000-03-10",
     "phones": [
       "1234567894"
+    ]
+  },
+  "nimbus2000": {
+    "birthday": null,
+    "phones": [
+      "122334567889"
     ]
   },
   "sergey": {
