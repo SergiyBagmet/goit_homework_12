@@ -100,6 +100,21 @@ def search_handler(data: list[str]) -> str:
         return "not found any contact"
     return res
 
+@input_error
+def show_page(data) -> str:
+    """"""
+    count_record, = data
+    try: 
+        count_record = int(count_record)
+        for page in a_book.iterator(count_record):
+            input("input any for next page")
+            yield page
+    except ValueError: # без єтого гавнокода все падает 
+        for _ in range(1):
+            yield("invalid input count page")
+
+    
+
 def show_all(*args) -> str:
     # тут может бить красивая формат обертка через цикл и поля рекорда
     return "\n".join([str(record)[9:] for record in a_book.values()])
@@ -139,6 +154,7 @@ BOT_COMMANDS = {
     delete_handler: ["delete"],
     search_handler: ["search"],
     show_all: ["show all"],
+    show_page : ["show page"],
     exit_handler: ["good bye", "close", "exit"],
 }
 
@@ -149,8 +165,13 @@ def main():
             continue
 
         func_handler, data = command_parser(user_input)
-        bot_message = func_handler(data)
-      
+        
+        if func_handler == show_page:
+            for page in func_handler(data):
+                print(page)
+            continue    
+
+        bot_message = func_handler(data)    
         print(bot_message)
         
         if func_handler == exit_handler:

@@ -307,6 +307,8 @@ class AddressBook(UserDict):
             ValueError: If item_number is less than or equal to 0.    
             TODO красивий(табличний .format принт)
         """
+        if type(item_number) != int:
+            raise ValueError("Item must be int number")
         if item_number <= 0:
             raise ValueError("Item number must be greater than 0.")
         elif item_number > len(self.data): # если количство виводов(за раз) больше чем количество записей
@@ -314,7 +316,7 @@ class AddressBook(UserDict):
         counter = 0
         result = ""
         for id_, record in self.data.items(): # так как ми наследуемся от UserDict може юзать кк словарь
-            result += f"{str(record)}\n"
+            result += f"{str(record)[9:]}\n"
             counter += 1
             
             if not counter % item_number: # условие для вивода в количестве item_number накоплений
