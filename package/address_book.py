@@ -251,12 +251,32 @@ class AddressBook(UserDict):
         self[record.name.value] = record # отрабативает __setitem__ 
     
     def __getitem__(self, key: str) -> Record:
+        """
+        Retrieve a record from the address book by its name.
+
+        Args:
+            key (str): The name of the record to retrieve.
+        Returns:
+            Record: The record object corresponding to the given name.
+        Raises:
+            KeyError: If the provided name is not found in the address book.
+        """
         record = self.data.get(key)
         if not record:
             raise KeyError(f"This name {key} isn't in Address Book")
         return record
     
     def __setitem__(self, key: str, val: Record) -> None:
+        """
+        Add or update a record in the address book.
+
+        Args:
+            key (str): The name of the record.
+            val (Record): The record object to be added or updated.
+        Raises:
+            TypeError: If the given value is not an instance of the Record class.
+            KeyError: If the provided name is already present in the address book.
+        """
         if type(val) != Record:
             raise TypeError("Record must be an instance of the Record class.")
         if key in self.data.keys():
@@ -264,6 +284,14 @@ class AddressBook(UserDict):
         self.data[key] = val
 
     def __delaitem__(self, key: str) -> None:
+        """
+        Delete a record from the address book by its name.
+
+        Args:
+            key (str): The name of the record to delete.
+        Raises:
+            KeyError: If the provided name is not found in the address book.
+        """
         if not isinstance(key, str):
             raise KeyError("key(name) must be string")
         if key not in self.data.keys():
@@ -271,12 +299,26 @@ class AddressBook(UserDict):
         del self.data[key]
 
     def to_dict(self) -> dict:
+        """
+        Convert the address book to a dictionary.
+
+        Returns:
+            dict: A dictionary representing the address book.
+        """
         res_dict = {}
         for key, rec in self.data.items():
             res_dict[key] = rec.to_dict()
         return res_dict
 
     def from_dict(self, data_json: dict) -> None:
+        """
+        Load data from a dictionary into the address book.
+
+        Args:
+            data_json (dict): A dictionary containing data for the address book.
+        Raises:
+            TypeError: If the provided data is not a dictionary.
+        """
         if type(data_json) != dict:
             raise TypeError("this is not dict")
         
@@ -287,6 +329,15 @@ class AddressBook(UserDict):
             self.add_record(res_record)
 
     def search(self, search_word: str) -> str:
+        """
+        Search for records containing the given search word.
+
+        Args:
+            search_word (str): The word to search for in the records.
+        
+        Yields:
+            str: A string representation of the found records.
+        """
         for record in self.data.values():
             if search_word.lower() in record.__repr__().lower():
                 yield str(record)[9:]
@@ -315,15 +366,14 @@ class AddressBook(UserDict):
             item_number = len(self.data) # виводим все
         counter = 0
         result = ""
-        for id_, record in self.data.items(): # так как ми наследуемся от UserDict може юзать кк словарь
+        for record in self.data.values(): # так как ми наследуемся от UserDict може юзать кк словарь
             result += f"{str(record)[9:]}\n"
             counter += 1
-            
             if not counter % item_number: # условие для вивода в количестве item_number накоплений
                 yield result
                 result = ""
-            elif counter == len(self.data) - len(self.data) % item_number + 1: # условие для хвоста
-                yield result
+            elif counter == len(self.data) :
+                yield result.rstrip()
 
 class AddressBookEncoder(json.JSONEncoder):
     def default(self, obj):

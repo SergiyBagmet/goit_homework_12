@@ -28,7 +28,15 @@ def input_error(func):
 
 @input_error
 def add_handler(data: list[str]) -> str:
-    """"""
+    """
+    Add a new contact to the address book.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the added contact.
+    """
     if len(data) >= 3:
         name, phone, birthday = data
         record = Record(name, phone, birthday)
@@ -41,35 +49,75 @@ def add_handler(data: list[str]) -> str:
 
 @input_error
 def add_handler_phone(data : list[str]) -> str:
-    """"""
+    """
+    Add a new phone number to an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the added phone number.
+    """
     name, new_phone, = data
     a_book[name].add_phone(new_phone)
     return f"Successful added phone {Phone(new_phone)} to contact {name}"
 
 @input_error
 def change_handler_phone(data: list[str]) -> str:
-    """"""
+    """
+    Change the phone number of an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the changed phone number.
+    """
     name, old_phone, new_phone, = data
     a_book[name].change_phone(old_phone, new_phone)
     return f"contact {name} has be changed phone to {Phone(new_phone)}"
 
 @input_error
 def del_handler_phone(data: list[str]) -> str:
-    """"""
+    """
+    Delete a phone number from an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the deleted phone number.
+    """
     name, old_phone, = data
     a_book[name].remove_phone(old_phone)
     return f"phone - {Phone(old_phone)} from contact {name} has be deleted"
 
 @input_error
 def delete_handler(data: list[str]) -> str:
-    """"""
+    """
+    Delete an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the deleted contact.
+    """
     name, = data
     del a_book[name]
     return f"contact {name} has be deleted"
 
 @input_error
 def add_handler_birthday(data: list[str]) -> str:
-    """"""
+    """
+    Add a birthday to an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the added birthday.
+    """
     name, birthday, = data
     record = a_book[name]
     if record.birthday is not None:
@@ -79,21 +127,45 @@ def add_handler_birthday(data: list[str]) -> str:
     
 @input_error
 def change_handler_birthday(data: list[str]) -> str:
-    """"""
+    """
+    Change the birthday of an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: A confirmation message for the changed birthday.
+    """
     name, birthday, = data
     a_book[name].change_birthday(birthday)
     return f"contact {name} is changed to date of birth: {birthday}"  
 
 @input_error
 def handler_days_to_birthday(data: list[str]) -> str:
-    """"""
+    """
+    Get the number of days until the next birthday of an existing contact.
+
+    Args:
+        data (list): A list containing contact information.
+
+    Returns:
+        str: The number of days until the next birthday.
+    """
     name, = data
     days = a_book[name].days_to_birthday() 
     return f"{days} days left until {name}'s birthday"  
 
 @input_error
 def search_handler(data: list[str]) -> str:
-    """"""
+    """
+    Search for contacts by a given keyword.
+
+    Args:
+        data (list): A list containing search keyword.
+
+    Returns:
+        str: A formatted list of contacts matching the search keyword.
+    """
     search_word, = data
     res = "\n".join(a_book.search(search_word))
     if not res:  
@@ -102,16 +174,27 @@ def search_handler(data: list[str]) -> str:
 
 @input_error
 def show_page(data) -> str:
-    """"""
+    """
+    Display contacts page by page.
+
+    Args:
+        data (list): A list containing the number of records per page.
+
+    Yields:
+        str: Formatted contacts for display, separated by pages.
+    """
     count_record, = data
     try: 
         count_record = int(count_record)
-        for page in a_book.iterator(count_record):
-            input("input any for next page")
-            yield page
-    except ValueError: # без єтого гавнокода все падает 
+        yield "input any for next page"
+        for i, page in enumerate(a_book.iterator(count_record), 1):
+            input("")
+            head = f'{"-" * 15} Page {i} {"-" * 15}\n'
+            yield head + page
+        yield f'{"-" * 15} end {"-" * 15}\n'   
+    except ValueError: # без єтого гавнокода все падает(с вводом не цифр) 
         for _ in range(1):
-            yield("invalid input count page")
+            yield "invalid input count page"
 
     
 
@@ -131,7 +214,15 @@ def unknown_command(*args) -> str:
     return 'Unknown command'
 
 def command_parser(row_str: str):
-    """"""
+    """
+    Parse a row string to identify and extract a command and its arguments.
+
+    Args:
+        row_str (str): A string containing the command and its arguments.
+
+    Returns:
+        tuple: A tuple containing the identified command key and a list of arguments.
+    """
     row_str = re.sub(r'\s+', ' ', row_str) 
     elements = row_str.strip().split(" ")
     for key, value in BOT_COMMANDS.items():
