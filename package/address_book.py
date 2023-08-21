@@ -40,7 +40,6 @@ class Name(Field):
     Class representing the name field in a record of  the address book.
     """
     def __init__(self, value: str) -> None:
-        self._value = None
         self.value = value
 
     # наследуем геттер и сеттер ради тренировки 
@@ -59,7 +58,6 @@ class Phone(Field):
     Class representing the phone field in a record of the address book.
     """
     def __init__(self, value: str) -> None:
-        self._value = None
         self.value = value # при инициализации отрабативает сеттер
         
     @staticmethod
@@ -250,23 +248,28 @@ class AddressBook(UserDict):
         Raises:
             TypeError: If the given object is not an instance of the Record class.
         """
-        if type(record) != Record:
-            raise TypeError("Record must be an instance of the Record class.")
-        self.data[record.name.value] = record 
+        self[record.name.value] = record # отрабативает __setitem__ 
     
-    def get_record(self, name:str) -> Record:
-        #TODO може тут через  __getitem__
-        record = self.data.get(name)
+    def __getitem__(self, key: str) -> Record:
+        record = self.data.get(key)
         if not record:
-            raise KeyError(f"This name {name} isn't in Address Book")
+            raise KeyError(f"This name {key} isn't in Address Book")
         return record
     
-    def del_record(self, name: str) -> None:
-        #TODO може тут через  __delitem__
-        del_record = self.data.pop(name, None)
-        if del_record is None:
-            raise KeyError(f"Can't delete contact {name} isn't in Address Book")
-        
+    def __setitem__(self, key: str, val: Record) -> None:
+        if type(val) != Record:
+            raise TypeError("Record must be an instance of the Record class.")
+        if key in self.data.keys():
+            raise KeyError(f"This name '{key}' is already in contacts")
+        self.data[key] = val
+
+    def __delaitem__(self, key: str) -> None:
+        if not isinstance(key, str):
+            raise KeyError("key(name) must be string")
+        if key not in self.data.keys():
+            raise KeyError(f"Can't delete contact {key} isn't in Address Book")
+        del self.data[key]
+
     def to_dict(self) -> dict:
         res_dict = {}
         for key, rec in self.data.items():

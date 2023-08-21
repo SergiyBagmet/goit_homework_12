@@ -29,8 +29,13 @@ def input_error(func):
 @input_error
 def add_handler(data: list[str]) -> str:
     """"""
-    name, phone, = data
-    record = Record(name, phone, data[2]) if len(data)>= 3 else Record(name, phone) 
+    if len(data) >= 3:
+        name, phone, birthday = data
+        record = Record(name, phone, birthday)
+    else:
+        name, phone, = data
+        record = Record(name, phone)     
+
     a_book.add_record(record)
     return f"contact {str(record)[9:]} has be added"
 
@@ -38,38 +43,35 @@ def add_handler(data: list[str]) -> str:
 def add_handler_phone(data : list[str]) -> str:
     """"""
     name, new_phone, = data
-    record = a_book.get_record(name)
-    record.add_phone(new_phone)
+    a_book[name].add_phone(new_phone)
     return f"Successful added phone {Phone(new_phone)} to contact {name}"
 
 @input_error
 def change_handler_phone(data: list[str]) -> str:
     """"""
     name, old_phone, new_phone, = data
-    record = a_book.get_record(name)
-    record.change_phone(old_phone, new_phone)
+    a_book[name].change_phone(old_phone, new_phone)
     return f"contact {name} has be changed phone to {Phone(new_phone)}"
 
 @input_error
 def del_handler_phone(data: list[str]) -> str:
     """"""
     name, old_phone, = data
-    record = a_book.get_record(name)
-    record.remove_phone(old_phone)
+    a_book[name].remove_phone(old_phone)
     return f"phone - {Phone(old_phone)} from contact {name} has be deleted"
 
 @input_error
 def delete_handler(data: list[str]) -> str:
     """"""
     name, = data
-    a_book.del_record(name)
+    del a_book[name]
     return f"contact {name} has be deleted"
 
 @input_error
 def add_handler_birthday(data: list[str]) -> str:
     """"""
-    name, birthday = data
-    record = a_book.get_record(name)
+    name, birthday, = data
+    record = a_book[name]
     if record.birthday is not None:
         return f"this contact {name} is already have a date of birth: {record.birthday}"
     record.change_birthday(birthday)
@@ -78,17 +80,15 @@ def add_handler_birthday(data: list[str]) -> str:
 @input_error
 def change_handler_birthday(data: list[str]) -> str:
     """"""
-    name, birthday = data
-    record = a_book.get_record(name)
-    record.change_birthday(birthday)
-    return f"contact {name} is changed to date of birth: {record.birthday}"  
+    name, birthday, = data
+    a_book[name].change_birthday(birthday)
+    return f"contact {name} is changed to date of birth: {birthday}"  
 
 @input_error
 def handler_days_to_birthday(data: list[str]) -> str:
     """"""
     name, = data
-    record = a_book.get_record(name)
-    days = record.days_to_birthday() 
+    days = a_book[name].days_to_birthday() 
     return f"{days} days left until {name}'s birthday"  
 
 @input_error
@@ -96,7 +96,7 @@ def search_handler(data: list[str]) -> str:
     """"""
     search_word, = data
     res = "\n".join(a_book.search(search_word))
-    if not res:  #TODO not work???
+    if not res:  
         return "not found any contact"
     return res
 
