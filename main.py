@@ -1,13 +1,16 @@
-from package import AddressBook, AddressBookEncoder, Record, wraps, json, Phone
+from package import AddressBook, Record, wraps, json, Phone, AddressBookEncoder
 import re
 
-file_json = "test.json"
-with open(file_json, "r") as file:
-    unpacked = json.load(file)
-a_book = AddressBook()    
-a_book.from_dict(unpacked)
-
-
+file_json  = "test.json"
+a_book = AddressBook() 
+try:
+    with open(file_json, "r") as file:
+        unpacked = json.load(file)
+    a_book.from_dict(unpacked)
+except FileNotFoundError:
+    with open(file_json, "w") as file:
+        json.dump({}, file)
+     
 def input_error(func):
     @wraps(func) #для отображения доки/имени
     def wrapper(*args):
@@ -39,13 +42,13 @@ def add_handler(data: list[str]) -> str:
     """
     if len(data) >= 3:
         name, phone, birthday = data
-        record = Record(name, phone, birthday)
+        record = Record(name, [phone], birthday)
     else:
         name, phone, = data
-        record = Record(name, phone)     
+        record = Record(name, [phone])     
 
     a_book.add_record(record)
-    return f"contact {str(record)[9:]} has be added"
+    return f"contact {str(record)} has be added"
 
 @input_error
 def add_handler_phone(data : list[str]) -> str:
@@ -167,13 +170,13 @@ def search_handler(data: list[str]) -> str:
         str: A formatted list of contacts matching the search keyword.
     """
     search_word, = data
-    res = "\n".join(a_book.search(search_word))
+    res = "\n".join([str(rec)[:9] for rec in a_book.search(search_word)])
     if not res:  
         return "not found any contact"
     return res
 
 @input_error
-def show_page(data) -> str:
+def show_page(data: list[str]) -> str:
     """
     Display contacts page by page.
 
@@ -188,7 +191,8 @@ def show_page(data) -> str:
         count_record = int(count_record)
         yield "input any for next page"
         for i, page in enumerate(a_book.iterator(count_record), 1):
-            input("")
+            page = "\n".join(map(lambda x: str(x)[9:], page ))
+            input("") 
             head = f'{"-" * 15} Page {i} {"-" * 15}\n'
             yield head + page
         yield f'{"-" * 15} end {"-" * 15}\n'   
@@ -206,8 +210,8 @@ def hello_handler(*args) -> str:
     return "How can I help you?"
 
 def exit_handler(*args) -> str:
-    with open(file_json, "w") as fh:
-        json.dump(a_book, fh, cls=AddressBookEncoder, sort_keys=True, indent=2)
+    with open(file_json, "w") as file:
+        json.dump(a_book, file, cls=AddressBookEncoder, sort_keys=True, indent=4)
     return "Good bye!"
 
 def unknown_command(*args) -> str:

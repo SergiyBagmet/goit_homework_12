@@ -1,38 +1,26 @@
 {
-  "Andrey": {
-    "birthday": null,
-    "phones": [
-      "1234567890"
-    ]
-  },
-  "Bill": {
-    "birthday": "1994-02-26",
-    "phones": [
-      "1234567890"
-    ]
-  },
-  "Megan": {
-    "birthday": "2000-05-03",
-    "phones": [
-      "1236547890"
-    ]
-  },
-  "Nata": {
-    "birthday": "1975-03-05",
-    "phones": [
-      "380666529589"
-    ]
-  },
-  "Olga": {
-    "birthday": "2000-02-29",
-    "phones": [
-      "380666529589"
-    ]
-  },
-  "nimbus2000": {
-    "birthday": null,
-    "phones": [
-      "122334567889"
-    ]
-  }
+    "Andrey": {
+        "birthday": "2000-04-10",
+        "phones": [
+            "1234567890"
+        ]
+    },
+    "Ivan": {
+        "birthday": "2000-02-29",
+        "phones": [
+            "380987654321"
+        ]
+    },
+    "Olga": {
+        "birthday": "2000-06-23",
+        "phones": [
+            "1234567890"
+        ]
+    },
+    "Serg": {
+        "birthday": null,
+        "phones": [
+            "380666529589"
+        ]
+    }
 }
