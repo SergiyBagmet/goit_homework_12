@@ -108,6 +108,7 @@ class Record:
         self.name = self._name(name)
         self.phones = [self._phone(phone) for phone in phones]
         self.birthday = None if birthday is None else self._birthday(birthday)
+        
 
     def _name(self, name: str | Name) -> Name:
         if not isinstance(name, Name):
@@ -166,9 +167,9 @@ class Record:
             ValueError: If the new phone number is already in contact's list of phone numbers.
         """
         
-        if old_phone := self._phone(old_phone) not in self.phones: 
+        if (old_phone := self._phone(old_phone)) not in self.phones: 
             raise ValueError(f"The phone '{old_phone}' is not in this record '{self.name}'.")
-        if new_phone := self._phone(new_phone) in self.phones:
+        if (new_phone := self._phone(new_phone)) in self.phones:
             raise ValueError(f"The phone '{new_phone}' already in record '{self.name}'.")
         inx = self.phones.index(old_phone)
         self.phones[inx] = new_phone
@@ -202,7 +203,7 @@ class Record:
     def __str__(self) -> str:
         # вывод телефонов с новой строки и табуляцией
         birthday_str = f'birthday: {self.birthday or "Empty"}'
-        phones_str = ",".join([str(ph) for ph in self.phones])
+        phones_str = ", ".join([str(ph) for ph in self.phones])
         return (
             f'<Record>:\n\tname: {self.name}'
             f'\n\tphones: {phones_str or "Empty"}\n\t'
@@ -384,35 +385,42 @@ class AddressBookEncoder(json.JSONEncoder):
 
 
 if __name__ == '__main__':
+    rec1 = Record("aaa")
+    rec2 = Record("bbb")
+  
+    print(id(rec1.phones))
+    print(id(rec2.phones))
 
-    name_1 = Name('Bill')
-    phone_1 = Phone('1234567890')
-    phone_10 = Phone('1234567893')
-    b_day_1 = Birthday('2023-12-30')
-    rec_1 = Record('Bill', ['1234567890'], '2000-12-30')
+    # rec1.add_phone('12234566854')
+    # print(rec1.phones)
+    # print(rec2.phones)
+    # rec2.add_phone('9765434789966')
+    # print(rec1.phones)
+    # print(rec2.phones)
+    # rec2.add_phone('12234566854')
+    # rec1.add_phone('9765434789966')
+    # print(rec1.phones)
+    # print(rec2.phones)
 
-    name_2 = Name('Nimbus2000')
-    phone_2 = Phone('+380666529589')
-    phone_20 = Phone('+380990666435')
-    b_day_2 = Birthday('2023-12-30')
-    rec_2 = Record(name_2, [phone_2, phone_20], b_day_2)
-
-   
-    ab = AddressBook()
-    ab.add_record(rec_1)
-    ab.add_record(rec_2)
-    
-    res = ab.search("name")
-    print('\n'.join([str(r) for r in res]))
-
-    
-    
-
+    # name_1 = Name('Bill')
+    # print(name_1.__dict__)
+    # phone_1 = Phone('1234567890')
+    # print(phone_1.__dict__)
+    # b_day_1 = Birthday('2023-12-30')
+    # print(b_day_1.__dict__)
+    # name_2 = Name('Nimbus2000')
+    # phone_2 = Phone('+380666529589')
+    # phone_20 = Phone('+380990666435')
+    # b_day_2 = Birthday('2023-12-30')
+    # rec_2 = Record(name_2, [phone_2, phone_20], b_day_2)
+    # ab = AddressBook()
+    # ab.add_record(rec_1)
+    # ab.add_record(rec_2)
+    # res = ab.search("name")
+    # print('\n'.join([str(r) for r in res]))
 
     # ab = AddressBook()
     # ab.add_record(rec)
-
-
 
     # print(ab)
     # file_json = "test.json"

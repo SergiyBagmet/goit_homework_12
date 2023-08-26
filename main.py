@@ -21,12 +21,16 @@ def input_error(func):
         """
         try:
             return func(*args)
-        except IndexError as err:
-            return f"Give me name and phone please {str(err)}"
+        except IndexError:
+            command, formula = COMMANDS_HELP.get(func.__name__)
+            command = '/'.join(command)
+            return (f"Wrong input for this command [{command}]\n"
+                    f"for example:\t[{command}] {formula}"
+                    )
         except ValueError as err:
-            return f"Give me an information: {str(err)}"
+            return f"Input error: {str(err)}."
         except KeyError as err:
-            return f"Give me the name from phonebook {str(err)}"
+            return f"Give me the name from phonebook: {str(err)}."
     return wrapper  
 
 @input_error
@@ -40,6 +44,7 @@ def add_handler(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the added contact.
     """
+    if len(data) <= 1 : raise IndexError
     if len(data) >= 3:
         name, phone, birthday = data
         record = Record(name, [phone], birthday)
@@ -61,6 +66,7 @@ def add_handler_phone(data : list[str]) -> str:
     Returns:
         str: A confirmation message for the added phone number.
     """
+    if len(data) <= 1 : raise IndexError
     name, new_phone, = data
     a_book[name].add_phone(new_phone)
     return f"Successful added phone {Phone(new_phone)} to contact {name}"
@@ -76,6 +82,7 @@ def change_handler_phone(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the changed phone number.
     """
+    if len(data) <= 2 : raise IndexError
     name, old_phone, new_phone, = data
     a_book[name].change_phone(old_phone, new_phone)
     return f"contact {name} has be changed phone to {Phone(new_phone)}"
@@ -91,6 +98,7 @@ def del_handler_phone(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the deleted phone number.
     """
+    if len(data) <= 1 : raise IndexError
     name, old_phone, = data
     a_book[name].remove_phone(old_phone)
     return f"phone - {Phone(old_phone)} from contact {name} has be deleted"
@@ -106,6 +114,7 @@ def delete_handler(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the deleted contact.
     """
+    if len(data) < 1 : raise IndexError
     name, = data
     del a_book[name]
     return f"contact {name} has be deleted"
@@ -121,6 +130,7 @@ def add_handler_birthday(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the added birthday.
     """
+    if len(data) <= 1 : raise IndexError
     name, birthday, = data
     record = a_book[name]
     if record.birthday is not None:
@@ -139,6 +149,7 @@ def change_handler_birthday(data: list[str]) -> str:
     Returns:
         str: A confirmation message for the changed birthday.
     """
+    if len(data) <= 1 : raise IndexError
     name, birthday, = data
     a_book[name].change_birthday(birthday)
     return f"contact {name} is changed to date of birth: {birthday}"  
@@ -154,6 +165,7 @@ def handler_days_to_birthday(data: list[str]) -> str:
     Returns:
         str: The number of days until the next birthday.
     """
+    if len(data) < 1 : raise IndexError
     name, = data
     days = a_book[name].days_to_birthday() 
     return f"{days} days left until {name}'s birthday"  
@@ -169,8 +181,9 @@ def search_handler(data: list[str]) -> str:
     Returns:
         str: A formatted list of contacts matching the search keyword.
     """
+    if len(data) < 1 : raise IndexError
     search_word, = data
-    res = "\n".join([str(rec)[:9] for rec in a_book.search(search_word)])
+    res = "\n".join([str(rec)[9:] for rec in a_book.search(search_word)])
     if not res:  
         return "not found any contact"
     return res
@@ -186,7 +199,7 @@ def show_page(data: list[str]) -> str:
     Yields:
         str: Formatted contacts for display, separated by pages.
     """
-    count_record, = data
+    count_record, = data if len(data) >= 1 else "1"
     try: 
         count_record = int(count_record)
         yield "input any for next page"
@@ -200,7 +213,13 @@ def show_page(data: list[str]) -> str:
         for _ in range(1):
             yield "invalid input count page"
 
-    
+def help_handler(*args) -> str:
+   return "\n".join(
+        [
+        '{:<26}{:<}'.format(" / ".join(com_anot[0]), com_anot[1]) 
+        for com_anot in COMMANDS_HELP.values()
+        ]
+        )
 
 def show_all(*args) -> str:
     # тут может бить красивая формат обертка через цикл и поля рекорда
@@ -230,28 +249,71 @@ def command_parser(row_str: str):
     row_str = re.sub(r'\s+', ' ', row_str) 
     elements = row_str.strip().split(" ")
     for key, value in BOT_COMMANDS.items():
-        if elements[0].lower() in value:
+        if elements[0].lower() in value[0]:
             return key, elements[1:]
-        elif " ".join(elements[:2]).lower() in value: 
+        elif " ".join(elements[:2]).lower() in value[0]: 
             return key, elements[2:] 
     return unknown_command, None
 
 BOT_COMMANDS = {
     # при командах (с одинаковими первими словами)"add" & "add phone" работает какую первую найдет
-    hello_handler: ["hello"],
-    add_handler: ["add", "+"],
-    add_handler_phone: ["add_phone"],
-    change_handler_phone: ["change phone"],
-    add_handler_birthday : ["birthday"],
-    change_handler_birthday: ["change birthday"],
-    handler_days_to_birthday: ["days"],
-    del_handler_phone: ["del phone"],
-    delete_handler: ["delete"],
-    search_handler: ["search"],
-    show_all: ["show all"],
-    show_page : ["show page"],
-    exit_handler: ["good bye", "close", "exit"],
+    hello_handler: (
+        ["hello"],
+        "hello"
+        ),
+    add_handler: (
+        ["add", "+"], 
+        "name phone(num) or name phone(num) date(ISO)"
+        ),
+    add_handler_phone: (
+        ["add_phone"], 
+        "name phone(num)"
+        ),
+    change_handler_phone: (
+        ["change phone"], 
+        "name old_phone(num) new_phone(num)"
+        ),
+    add_handler_birthday : (
+        ["birthday"], 
+        "name date(ISO)"
+        ),
+    change_handler_birthday: (
+        ["change birthday"], 
+        "name new_date(ISO)"
+        ),
+    handler_days_to_birthday: (
+        ["days"], 
+        "name"),
+    del_handler_phone: (
+        ["del phone"], 
+        "name phone(num)"
+        ),
+    delete_handler: (
+        ["delete"], 
+        "name"),
+    search_handler: (
+        ["search"], 
+        "search(alpha/num)"
+        ),
+    show_all: (
+        ["show all"], 
+        "show all address book"
+        ),
+    show_page : (
+        ["show page"], 
+        "int_num(positive) - show all address book"
+        ),
+    help_handler: (
+        ["help"], 
+        "- show all bot commands"
+        ),    
+    exit_handler: (
+        ["good bye", "close", "exit"], 
+        "- save changesets and exit"
+        ),
 }
+
+COMMANDS_HELP = {k.__name__:v for k,v in BOT_COMMANDS.items()}
 
 def main():
     while True:
