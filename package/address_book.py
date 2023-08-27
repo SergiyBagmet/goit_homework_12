@@ -366,16 +366,13 @@ class AddressBook(UserDict):
             raise ValueError("Item number must be greater than 0.")
         elif item_number > len(self.data): # если количство виводов(за раз) больше чем количество записей
             item_number = len(self.data) # виводим все
-        counter = 0
+        
         list_records = []
-        for record in self.data.values():
+        for counter, record in enumerate(self.data.values(), 1):
             list_records.append(record)
-            counter += 1
-            if not counter % item_number: # условие для вивода в количестве item_number накоплений
+            if (not counter % item_number) or counter == len(self.data): 
                 yield list_records
                 list_records = []
-            elif counter == len(self.data):
-                yield list_records
 
 class AddressBookEncoder(json.JSONEncoder):
     def default(self, obj: AddressBook | Record) -> dict[str, str | list[str]] | t.Any:
